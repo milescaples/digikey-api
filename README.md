@@ -23,6 +23,8 @@ pip install digikey-api
 export DIGIKEY_CLIENT_ID="client_id"
 export DIGIKEY_CLIENT_SECRET="client_secret"
 export DIGIKEY_STORAGE_PATH="cache_dir"
+# if working with sandbox do the following export as well
+export DIGIKEY_SANDBOX="True"
 ```
 
 ## Use
@@ -36,6 +38,8 @@ import digikey
 os.environ['DIGIKEY_CLIENT_ID'] = 'client_id'
 os.environ['DIGIKEY_CLIENT_SECRET'] = 'client_secret'
 os.environ['DIGIKEY_STORAGE_PATH'] = 'cache_dir'
+#Uncomment following to work in Digikey's sandbox https://developer.digikey.com/documentation/developer#sandbox
+# os.environ['DIGIKEY_SANDBOX'] = True
 
 dkpn = '296-6501-1-ND'
 part = digikey.part(dkpn)

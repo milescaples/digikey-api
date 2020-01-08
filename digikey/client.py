@@ -70,10 +70,9 @@ class DigikeyClient(object):
                    'authorization': self.oauth2.get_authorization()}
 
         response = requests.post('%s%s' % (self.base_url, path), json=data, headers=headers)
-        # rate_limit = re.split('[,;]+', response.headers['x-ratelimit-limit'])[1]
-        # rate_limit_rem = re.split('[,;]+', response.headers['x-ratelimit-remaining'])[1]
-        # logger.debug('Requested Digikey URI: {} [{}/{}]'.format(response.url), rate_limit_rem, rate_limit))
-        logger.debug('Requested Digikey URI: {}'.format(response.url))
+        rate_limit = re.split('[,;]+', response.headers['x-ratelimit-limit'])[0]
+        rate_limit_rem = re.split('[,;]+', response.headers['x-ratelimit-remaining'])[0]
+        logger.debug('Requested Digikey URI: {} [{}/{}]'.format(response.url, rate_limit_rem, rate_limit))
 
         response.raise_for_status()
         return response.json()
@@ -88,10 +87,9 @@ class DigikeyClient(object):
                    'authorization': self.oauth2.get_authorization()}
 
         response = requests.get('%s%s' % (self.base_url, path), params=data, headers=headers)
-        # rate_limit = re.split('[,;]+', response.headers['x-ratelimit-limit'])[1]
-        # rate_limit_rem = re.split('[,;]+', response.headers['x-ratelimit-remaining'])[1]
-        # logger.debug('Requested Digikey URI: {} [{}/{}]'.format(response.url), rate_limit_rem, rate_limit))
-        logger.debug('Requested Digikey URI: {}'.format(response.url))
+        rate_limit = re.split('[,;]+', response.headers['x-ratelimit-limit'])[0]
+        rate_limit_rem = re.split('[,;]+', response.headers['x-ratelimit-remaining'])[0]
+        logger.debug('Requested Digikey URI: {} [{}/{}]'.format(response.url, rate_limit_rem, rate_limit))
 
         response.raise_for_status()
         return response.json()
@@ -147,11 +145,13 @@ class DigikeyClient(object):
         Returns:
             dict. See `models.Part` for exact fields.
         """
-        data = {
-            'part': partnr,
-            'include_all_associated_products': include_associated,
-            'include_all_for_use_with_products': include_for_use_with
-        }
+        #TODO: (also in Model) How to best keep these fields include_all_associated_products, include_all_for_use_with_products from PartDetailPostRequest
+        # data = {
+        #     'part': partnr,
+        #     'include_all_associated_products': include_associated,
+        #     'include_all_for_use_with_products': include_for_use_with
+        # }
+
         data = {
             'part': partnr,
             # 'includes': "DigiKeyPartNumber,ManufacturerPartNumber,QuantityAvailable,AssociatedProducts[2]"

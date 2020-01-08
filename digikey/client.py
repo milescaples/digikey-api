@@ -127,7 +127,7 @@ class DigikeyClient(object):
             errors = models.KeywordSearchRequest.errors(data)
             raise DigikeyError('Query is malformed: %s' % errors)
 
-        # Convert `query` to format that Octopart accepts.
+        # Convert `query` to format that Digikey accepts.
         params = models.KeywordSearchRequest.camelize(models.KeywordSearchRequest(data).to_primitive())
 
         return self._request('/Search/v3/Products/Keyword', data=params)

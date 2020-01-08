@@ -44,6 +44,13 @@ print(part)
 
 print(part.manufacturer)
 # 'Texas Instruments'
+
+print(part.parameters)
+
+searchresults = digikey.search('NE555')
+print(searchresults)
+print(searchresults.products)
+
 ```
 
 ## Test

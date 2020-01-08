@@ -109,25 +109,26 @@ class ProductDetailGetRequest(BaseModel):
     # Part number. Works best with Digi-Key part numbers.
     part = StringType(required=True)
     includes = StringType(required=False)
+#TODO: How to best keep these fields include_all_associated_products, include_all_for_use_with_products from PartDetailPostRequest
 
 class KeywordSearchResult:
     def __init__(self, result):
         self._result = result
 
     @property
-    def parts(self):
+    def products(self):
         return [
             Part(result)
-            for result in self._result.get('Parts', [])
+            for result in self._result.get('Products', [])
         ]
 
     def __repr__(self):
-        return '<KeywordSearchResult: hits=%s>' % self._result['Results']
+        return '<KeywordSearchResult: hits=%s>' % self._result['ProductsCount']
 
     def pretty_print(self):
         print(self)
-        for part in self.parts:
-            print('\t%s' % part)
+        for product in self.product:
+            print('\t%s' % product)
 
 
 ''' 

@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import urlencode,urlsplit,parse_qs
 from webbrowser import open_new
 
 import requests
@@ -18,10 +18,16 @@ from digikey.exceptions import DigykeyOauthException
 
 CA_CERT = 'digikey-api.pem'
 TOKEN_STORAGE = 'token_storage.json'
-AUTH_URL = 'https://sso.digikey.com/as/authorization.oauth2'
-TOKEN_URL = 'https://sso.digikey.com/as/token.oauth2'
-REDIRECT_URI = 'https://localhost:8139/digikey_callback'
-PORT = 8139
+
+if os.getenv('DIGIKEY_SANDBOX')=='True':
+    AUTH_URL = 'https://sandbox-api.digikey.com/v1/oauth2/authorize'
+    TOKEN_URL = 'https://sandbox-api.digikey.com/v1/oauth2/token'
+    REDIRECT_URI = 'https://localhost:8139/digikey_callback'
+else:
+    AUTH_URL = 'https://api.digikey.com/v1/oauth2/authorize'
+    TOKEN_URL = 'https://api.digikey.com/v1/oauth2/token'
+    REDIRECT_URI = 'https://localhost:8139/digikey_callback'
+    PORT = 8139
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +56,8 @@ class Oauth2Token:
         return datetime.now(timezone.utc) >= self.expires
 
     def get_authorization(self) -> str:
-        return self.type + ' ' + self.access_token
+        return 'Bearer' + ' ' + self.access_token #TODO: Digikey will not process 'BearerToken' it has to be the work "Bearer"
+        # return self.type + ' ' + self.access_token
 
     def __repr__(self):
         return '<Token: expires={}>'.format(self.expires.astimezone().isoformat())
@@ -71,7 +78,9 @@ class HTTPServerHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/html')
         self.end_headers()
         if 'code' in self.path:
-            self.auth_code = self.path.split('=')[1]
+            split_result = urlsplit(self.path)
+            params = parse_qs(split_result.query)
+            self.auth_code = params['code'][0]
             self.wfile.write(bytes('<html>' +
                                    '<body>'
                                    '<h1>You may now close this window.</h1>' +

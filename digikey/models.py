@@ -102,6 +102,13 @@ class PartDetailPostRequest(BaseModel):
     # The option to include all For Use With products
     include_all_for_use_with_products = BooleanType()
 
+class ProductDetailGetRequest(BaseModel):
+    """Query format sent to the partdetails endpoint
+    https://api-portal.digikey.com/node/8517
+    """
+    # Part number. Works best with Digi-Key part numbers.
+    part = StringType(required=True)
+    includes = StringType(required=False)
 
 class KeywordSearchResult:
     def __init__(self, result):
@@ -220,7 +227,7 @@ class Part:
 
     @property
     def manufacturer(self) -> str:
-        return IdTextPair(self._part.get('ManufacturerName', {})).text
+        return PidVid(self._part.get('Manufacturer', {})).value
 
     @property
     def mpn(self) -> str:
@@ -240,7 +247,7 @@ class Part:
 
     @property
     def in_stock(self) -> int:
-        return self._part.get('QuantityOnHand', None)
+        return self._part.get('QuantityAvailable', None)
 
     @property
     def moq(self) -> int:

@@ -13,8 +13,10 @@ from digikey.exceptions import DigikeyError
 from digikey.oauth2 import TokenHandler
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_BASE_URL = 'https://api.digikey.com/services/partsearch/v2'
+if os.getenv('DIGIKEY_SANDBOX')=='True':
+    DEFAULT_BASE_URL = 'https://sandbox-api.digikey.com'
+else:
+    DEFAULT_BASE_URL = 'https://api.digikey.com'
 
 
 class DigikeyClient(object):
@@ -64,12 +66,29 @@ class DigikeyClient(object):
                  data: t.Dict[str, t.Any]=None
                  ) -> t.Any:
         headers = {'user-agent': f'{UserAgent().firefox}',
-                   'x-ibm-client-id': self._id,
+                   'X-DIGIKEY-Client-Id': self._id,
                    'authorization': self.oauth2.get_authorization()}
 
         response = requests.post('%s%s' % (self.base_url, path), json=data, headers=headers)
-        rate_limit = re.split('[,;]+', response.headers['x-ratelimit-limit'])[1]
-        rate_limit_rem = re.split('[,;]+', response.headers['x-ratelimit-remaining'])[1]
+        rate_limit = re.split('[,;]+', response.headers['x-ratelimit-limit'])[0]
+        rate_limit_rem = re.split('[,;]+', response.headers['x-ratelimit-remaining'])[0]
+        logger.debug('Requested Digikey URI: {} [{}/{}]'.format(response.url, rate_limit_rem, rate_limit))
+
+        response.raise_for_status()
+        return response.json()
+
+    @retry
+    def _request_get(self,
+                 path: str,
+                 data: t.Dict[str, t.Any]=None
+                 ) -> t.Any:
+        headers = {'user-agent': f'{UserAgent().firefox}',
+                   'X-DIGIKEY-Client-Id': self._id,
+                   'authorization': self.oauth2.get_authorization()}
+
+        response = requests.get('%s%s' % (self.base_url, path), params=data, headers=headers)
+        rate_limit = re.split('[,;]+', response.headers['x-ratelimit-limit'])[0]
+        rate_limit_rem = re.split('[,;]+', response.headers['x-ratelimit-remaining'])[0]
         logger.debug('Requested Digikey URI: {} [{}/{}]'.format(response.url, rate_limit_rem, rate_limit))
 
         response.raise_for_status()
@@ -106,10 +125,10 @@ class DigikeyClient(object):
             errors = models.KeywordSearchRequest.errors(data)
             raise DigikeyError('Query is malformed: %s' % errors)
 
-        # Convert `query` to format that Octopart accepts.
+        # Convert `query` to format that Digikey accepts.
         params = models.KeywordSearchRequest.camelize(models.KeywordSearchRequest(data).to_primitive())
 
-        return self._request('/keywordsearch', data=params)
+        return self._request('/Search/v3/Products/Keyword', data=params)
 
     def part(self,
              partnr: str,
@@ -126,17 +145,24 @@ class DigikeyClient(object):
         Returns:
             dict. See `models.Part` for exact fields.
         """
+        #TODO: (also in Model) How to best keep these fields include_all_associated_products, include_all_for_use_with_products from PartDetailPostRequest
+        # data = {
+        #     'part': partnr,
+        #     'include_all_associated_products': include_associated,
+        #     'include_all_for_use_with_products': include_for_use_with
+        # }
+
         data = {
             'part': partnr,
-            'include_all_associated_products': include_associated,
-            'include_all_for_use_with_products': include_for_use_with
+            # 'includes': "DigiKeyPartNumber,ManufacturerPartNumber,QuantityAvailable,AssociatedProducts[2]"
         }
 
-        if not models.PartDetailPostRequest.is_valid(data):
-            errors = models.PartDetailPostRequest.errors(data)
+        if not models.ProductDetailGetRequest.is_valid(data):
+            errors = models.ProductDetailGetRequest.errors(data)
             raise DigikeyError('Query is malformed: %s' % errors)
 
-        # Convert `query` to format that Octopart accepts.
-        params = models.PartDetailPostRequest.camelize(models.PartDetailPostRequest(data).to_primitive())
+        # Convert `query` to format that Digikey accepts.
+        params = models.ProductDetailGetRequest.camelize(models.ProductDetailGetRequest(data).to_primitive())
 
-        return self._request('/partdetails', data=params)
+        del params['Part']
+        return self._request_get('/Search/v3/Products/{}'.format(partnr), data=params)

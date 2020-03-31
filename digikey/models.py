@@ -102,25 +102,33 @@ class PartDetailPostRequest(BaseModel):
     # The option to include all For Use With products
     include_all_for_use_with_products = BooleanType()
 
+class ProductDetailGetRequest(BaseModel):
+    """Query format sent to the partdetails endpoint
+    https://api-portal.digikey.com/node/8517
+    """
+    # Part number. Works best with Digi-Key part numbers.
+    part = StringType(required=True)
+    includes = StringType(required=False)
+#TODO: How to best keep these fields include_all_associated_products, include_all_for_use_with_products from PartDetailPostRequest
 
 class KeywordSearchResult:
     def __init__(self, result):
         self._result = result
 
     @property
-    def parts(self):
+    def products(self):
         return [
             Part(result)
-            for result in self._result.get('Parts', [])
+            for result in self._result.get('Products', [])
         ]
 
     def __repr__(self):
-        return '<KeywordSearchResult: hits=%s>' % self._result['Results']
+        return '<KeywordSearchResult: hits=%s>' % self._result['ProductsCount']
 
     def pretty_print(self):
         print(self)
-        for part in self.parts:
-            print('\t%s' % part)
+        for product in self.product:
+            print('\t%s' % product)
 
 
 ''' 
@@ -220,7 +228,7 @@ class Part:
 
     @property
     def manufacturer(self) -> str:
-        return IdTextPair(self._part.get('ManufacturerName', {})).text
+        return PidVid(self._part.get('Manufacturer', {})).value
 
     @property
     def mpn(self) -> str:
@@ -240,7 +248,7 @@ class Part:
 
     @property
     def in_stock(self) -> int:
-        return self._part.get('QuantityOnHand', None)
+        return self._part.get('QuantityAvailable', None)
 
     @property
     def moq(self) -> int:

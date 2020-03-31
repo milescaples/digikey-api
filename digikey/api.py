@@ -51,4 +51,4 @@ def part(partnr: str,
         include_associated=include_associated,
         include_for_use_with=include_for_use_with,
     )
-    return models.Part(response['PartDetails'])
+    return models.Part(response)

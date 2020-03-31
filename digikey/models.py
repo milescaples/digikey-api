@@ -211,12 +211,12 @@ class Part:
         ]
 
     @property
-    def category(self) -> IdTextPair:
-        return IdTextPair(self._part.get('Category', {}))
+    def category(self) -> str:
+        return PidVid(self._part.get('LimitedTaxonomy', {})['Children'][0]).value
 
     @property
-    def family(self) -> IdTextPair:
-        return IdTextPair(self._part.get('Family', {}))
+    def family(self) -> str:
+        return PidVid(self._part.get('LimitedTaxonomy', {})['Children'][0]['Children'][0]).value
 
     @property
     def manufacturer(self) -> str:
